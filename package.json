@@ -8,7 +8,8 @@
     "v2": "node ./src/server-v2.js",
     "v3": "node ./src/server-v3.js",
     "server": "node ./test/server.js",
-    "client": "node ./test/client.js"
+    "client": "node ./test/client.js",
+    "prettier-write": "prettier --write \"src/**/*.js\" \"test/**/*.js\""
   },
   "repository": {
     "type": "git",
@@ -25,5 +26,8 @@
   "bugs": {
     "url": "https://github.com/Kaifuny/net-for-http-or-ws/issues"
   },
-  "homepage": "https://github.com/Kaifuny/net-for-http-or-ws#readme"
+  "homepage": "https://github.com/Kaifuny/net-for-http-or-ws#readme",
+  "devDependencies": {
+    "prettier": "^2.8.8"
+  }
 }
