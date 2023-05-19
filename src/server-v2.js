@@ -4,7 +4,8 @@
  * LICENSE: MIT
  */
 const { createServer } = require("net");
-const path = require("path");
+const { join } = require("path");
+const fs = require("fs");
 
 const HTTP_VERSION = "HTTP/1.1";
 
@@ -134,7 +135,7 @@ const ResponseCookie = (statusCode, headers, body, cookie) => {
 const Config = {
   port: 8888,
   host: "localhost",
-  root: path.join(__dirname, "../test/www"),
+  root: join(__dirname, "../test/www"),
   index: ["/", "/index", "/index.html"],
 };
 
@@ -181,7 +182,7 @@ const server = createServer((socket) => {
     }
 
     // content type
-    let contentType = headers["Content-Type"] || "text/plain";
+    let contentType = headers["Content-Type"] || "text/html";
     Object.keys(CONTENTTYPE_MAP).forEach((key) => {
       if (path.endsWith(key)) {
         contentType = CONTENTTYPE_MAP[key];
@@ -198,17 +199,32 @@ const server = createServer((socket) => {
       .map((item) => path.endsWith(item))
       .includes(true);
     if (method === HTTP_METHOD.GET && endsWithConfigIndex) {
-      const response = Response(
-        HTTP_STATUS_CODE.OK,
-        {
-          "Content-Type": "text/plain",
-          "Content-Length": "Hello World".length,
-        },
-        "Hello World"
-      );
-
-      socket.write(response);
-      socket.end();
+      console.log(join(Config.root, "/index.html"));
+      fs.readFile(join(Config.root, "/index.html"), (err, data) => {
+        if (err) {
+          const response = Response(
+            HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
+            {
+              "Content-Type": "text/plain",
+              "Content-Length": "Internal Server Error".length,
+            },
+            "Internal Server Error"
+          );
+          socket.write(response);
+          socket.end();
+        }
+        console.log(data, contentType)
+        const response = Response(
+          HTTP_STATUS_CODE.OK,
+          {
+            "Content-Type": contentType,
+            "Content-Length": data.length,
+          },
+          data
+        );
+        socket.write(response);
+        socket.end();
+      });
       return;
     }
 
