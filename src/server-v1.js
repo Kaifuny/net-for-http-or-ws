@@ -1,3 +1,8 @@
+/**
+ * Simple Ping/Pong Server
+ * Author: Kaifuny
+ * LICENSE: MIT
+ */
 const net = require('net');
 
 const server = net.createServer((socket) => {
