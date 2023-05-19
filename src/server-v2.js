@@ -112,7 +112,7 @@ const server = createServer((socket) => {
         console.log(`Body: ${body}`)
         console.log("====================================")
 
-        // 判断 method
+        // is valid http method
         if (!Object.values(HTTP_METHOD).includes(method)) {
             const response = Response(HTTP_STATUS_CODE.METHOD_NOT_ALLOWED, {
                 'Content-Type': 'text/plain',
@@ -123,7 +123,7 @@ const server = createServer((socket) => {
             return
         }
 
-        // 根据 path 或者是 header 返回响应内容类型，path 优先级高于 header，如果都没有则默认为 text/plain
+        // content type
         let contentType = headers['Content-Type'] || 'text/plain'
         Object.keys(CONTENTTYPE_MAP).forEach((key) => {
             if (path.endsWith(key)) {
@@ -131,13 +131,14 @@ const server = createServer((socket) => {
             }
         });
 
-        // 默认访问路径设置
+        // default index file
+        // example:
         // http://localhost:port
         // http://localhost:port/
         // http://localhost:port/.../index
         // http://localhost:port/.../index.html
-        const endsWithSlash = Config.index.map((item) => path.endsWith(item)).includes(true);
-        if (method === HTTP_METHOD.GET && endsWithSlash) {
+        const endsWithConfigIndex = Config.index.map((item) => path.endsWith(item)).includes(true);
+        if (method === HTTP_METHOD.GET && endsWithConfigIndex) {
             const response = Response(HTTP_STATUS_CODE.OK, {
                 'Content-Type': 'text/plain',
                 'Content-Length': 'Hello World'.length
@@ -148,6 +149,8 @@ const server = createServer((socket) => {
             return    
         }
         
+        // TODO Handle method
+        // TODO Upload File
 
         // 404
         const response = Response(HTTP_STATUS_CODE.NOT_FOUND, {
