@@ -150,6 +150,21 @@ const server = createServer((socket) => {
     console.log(`Body: ${body}`);
     console.log("====================================");
 
+    // is valid http version
+    if (httpVersion !== HTTP_VERSION) {
+      const response = Response(
+        HTTP_STATUS_CODE.BAD_REQUEST,
+        {
+          "Content-Type": "text/plain",
+          "Content-Length": "Bad Request".length,
+        },
+        "Bad Request"
+      );
+      socket.write(response);
+      socket.end();
+      return;
+    }
+
     // is valid http method
     if (!Object.values(HTTP_METHOD).includes(method)) {
       const response = Response(

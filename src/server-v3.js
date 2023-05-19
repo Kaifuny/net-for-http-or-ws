@@ -1,5 +1,5 @@
 /**
- * Simple HTTP Server and WebSocket Server
+ * Simple WebSocket Server
  * Author: Kaifuny
  * LICENSE: MIT
  */
