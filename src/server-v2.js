@@ -188,30 +188,17 @@ const server = createServer((socket) => {
         contentType = CONTENTTYPE_MAP[key];
       }
     });
-
-    // default index file
-    // example:
-    // http://localhost:port
-    // http://localhost:port/
-    // http://localhost:port/.../index
-    // http://localhost:port/.../index.html
-    const endsWithConfigIndex = Config.index
-      .map((item) => path.endsWith(item))
-      .includes(true);
-    if (method === HTTP_METHOD.GET && endsWithConfigIndex) {
-      fs.readFile(join(Config.root, "/index.html"), (err, data) => {
-        if (err) {
-          const response = Response(
-            HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
-            {
-              "Content-Type": "text/plain",
-              "Content-Length": "Internal Server Error".length,
-            },
-            "Internal Server Error"
-          );
-          socket.write(response);
-          socket.end();
-        }
+    
+    try {
+      // default index file
+      // example:
+      // http://localhost:port
+      // http://localhost:port/
+      // http://localhost:port/.../index
+      // http://localhost:port/.../index.html
+      const endsWithConfigIndex = Config.index.map((item) => path.endsWith(item)).includes(true);
+      if (method === HTTP_METHOD.GET && endsWithConfigIndex) {
+        const data = fs.readFileSync(join(Config.root, "/index.html"));
         const response = Response(
           HTTP_STATUS_CODE.OK,
           {
@@ -222,12 +209,24 @@ const server = createServer((socket) => {
         );
         socket.write(response);
         socket.end();
-      });
-      return;
-    }
+        return;
+      }
 
-    // TODO Handle method
-    // TODO Upload File
+      // TODO Handle method
+      // TODO Upload File
+
+    } catch (error) {
+      const response = Response(
+        HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
+        {
+          "Content-Type": "text/plain",
+          "Content-Length": "Internal Server Error".length,
+        },
+        "Internal Server Error"
+      );
+      socket.write(response);
+      socket.end();
+    }
 
     // 404
     const response = Response(
