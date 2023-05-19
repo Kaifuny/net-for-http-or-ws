@@ -124,7 +124,7 @@ const server = createServer((socket) => {
         }
 
         // 根据 path 或者是 header 返回响应内容类型，path 优先级高于 header，如果都没有则默认为 text/plain
-        let contentType = 'text/plain'
+        let contentType = headers['Content-Type'] || 'text/plain'
         Object.keys(CONTENTTYPE_MAP).forEach((key) => {
             if (path.endsWith(key)) {
                 contentType = CONTENTTYPE_MAP[key]
