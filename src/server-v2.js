@@ -79,12 +79,56 @@ const parseRequest = (request) => {
   };
 };
 
+const parseCookie = (cookie) => {
+  const cookieArr = cookie.split("; ");
+  return cookieArr.reduce((acc, cur) => {
+    const [key, value] = cur.split("=");
+    acc[key] = value;
+    return acc;
+  }, {});
+};
+
+const Cookie = (cookieObj, options = {}) => {
+  const cookie = Object.keys(cookieObj).reduce((acc, cur) => {
+    acc += `${cur}=${cookieObj[cur]}; `;
+    return acc;
+  }, "");
+  const { maxAge, expires, path, domain, httpOnly, secure } = options;
+  if (maxAge) {
+    cookie += `; Max-Age=${maxAge}`;
+  }
+  if (expires) {
+    cookie += `; Expires=${expires}`;
+  }
+  if (path) {
+    cookie += `; Path=${path}`;
+  }
+  if (domain) {
+    cookie += `; Domain=${domain}`;
+  }
+  if (httpOnly) {
+    cookie += `; HttpOnly`;
+  }
+  if (secure) {
+    cookie += `; Secure`;
+  }
+  return cookie;
+};
+
 const Response = (statusCode, headers, body) => {
   const header = Object.keys(headers).reduce((acc, cur) => {
     acc += `${cur}: ${headers[cur]}\r\n`;
     return acc;
   }, "");
   return `${HTTP_VERSION} ${statusCode} ${HTTP_STATUS_TEXT[statusCode]}\r\n${header}\r\n${body}`;
+};
+
+const ResponseCookie = (statusCode, headers, body, cookie) => {
+  const header = Object.keys(headers).reduce((acc, cur) => {
+    acc += `${cur}: ${headers[cur]}\r\n`;
+    return acc;
+  }, "");
+  return `${HTTP_VERSION} ${statusCode} ${HTTP_STATUS_TEXT[statusCode]}\r\n${header}Set-Cookie: ${cookie}\r\n\r\n${body}`;
 };
 
 const Config = {
