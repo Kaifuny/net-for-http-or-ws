@@ -199,7 +199,6 @@ const server = createServer((socket) => {
       .map((item) => path.endsWith(item))
       .includes(true);
     if (method === HTTP_METHOD.GET && endsWithConfigIndex) {
-      console.log(join(Config.root, "/index.html"));
       fs.readFile(join(Config.root, "/index.html"), (err, data) => {
         if (err) {
           const response = Response(
@@ -213,7 +212,6 @@ const server = createServer((socket) => {
           socket.write(response);
           socket.end();
         }
-        console.log(data, contentType)
         const response = Response(
           HTTP_STATUS_CODE.OK,
           {
