@@ -132,7 +132,12 @@ const server = createServer((socket) => {
         });
 
         // 默认访问路径设置
-        if (method === HTTP_METHOD.GET && Config.index.includes(path)) {
+        // http://localhost:port
+        // http://localhost:port/
+        // http://localhost:port/.../index
+        // http://localhost:port/.../index.html
+        const endsWithSlash = Config.index.map((item) => path.endsWith(item)).includes(true);
+        if (method === HTTP_METHOD.GET && endsWithSlash) {
             const response = Response(HTTP_STATUS_CODE.OK, {
                 'Content-Type': 'text/plain',
                 'Content-Length': 'Hello World'.length
