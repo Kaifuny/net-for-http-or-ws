@@ -132,14 +132,14 @@ const ResponseCookie = (statusCode, headers, body, cookie) => {
   return `${HTTP_VERSION} ${statusCode} ${HTTP_STATUS_TEXT[statusCode]}\r\n${header}Set-Cookie: ${cookie}\r\n\r\n${body}`;
 };
 
-const sendClientOrServerErrorCode = (socket, code) => {
+const sendClientOrServerErrorCode = (socket, code, errorMessage) => {
   const response = Response(
     code,
     {
       "Content-Type": "text/plain",
-      "Content-Length": HTTP_STATUS_TEXT[code].length,
+      "Content-Length": (HTTP_STATUS_TEXT[code] || errorMessage).length,
     },
-    HTTP_STATUS_TEXT[code]
+    HTTP_STATUS_TEXT[code] || errorMessage
   );
   socket.write(response);
   socket.end();
@@ -150,6 +150,25 @@ const Config = {
   host: "localhost",
   root: join(__dirname, "../test/www"),
   index: ["/", "/index", "/index.html"],
+  asserts: join(__dirname, "../test/asserts"),
+  auth: {
+    username: "admin",
+    password: "admin",
+  },
+  api: [
+    {
+      path: "/login",
+      method: HTTP_METHOD.POST,
+      handler: ({ method, path, body }, socket) => {
+      },
+    }
+  ],
+  upload: {
+    path: "/upload",
+    method: HTTP_METHOD.POST,
+    handler: ({ method, path, body }, socket) => {
+    },
+  }
 };
 
 const server = createServer((socket) => {
@@ -163,6 +182,7 @@ const server = createServer((socket) => {
     console.log(`Headers: ${JSON.stringify(headers)}`);
     console.log(`Body: ${body}`);
     console.log("====================================");
+
     try {
       // is valid http version
       if (httpVersion !== HTTP_VERSION) {
@@ -183,16 +203,24 @@ const server = createServer((socket) => {
           contentType = CONTENTTYPE_MAP[key];
         }
       });
-    
-    
 
       // TODO Handle method
       if (path === "/api") {
+        Config.api.forEach((item) => {
+          if (item.path === path && item.method === method) {
+            item.handler({ method, path, body }, socket);
+          }
+        });
         return;
       }
 
       // TODO Upload File
       if (path === "/upload") {
+        Config.upload.forEach((item) => {
+          if (item.path === path && item.method === method) {
+            item.handler({ method, path, body }, socket);
+          }
+        });
         return;
       }
       // default index file
@@ -221,7 +249,7 @@ const server = createServer((socket) => {
         sendClientOrServerErrorCode(socket, HTTP_STATUS_CODE.NOT_FOUND);
         return;
       }
-      sendClientOrServerErrorCode(socket, HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR);
+      sendClientOrServerErrorCode(socket, HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR, error.message);
     }
 
     // 404
@@ -229,7 +257,7 @@ const server = createServer((socket) => {
   });
 
   socket.on("error", (data) => {
-    sendClientOrServerErrorCode(socket, HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR);
+    sendClientOrServerErrorCode(socket, HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR, error.message);
   });
 });
 
