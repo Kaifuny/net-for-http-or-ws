@@ -190,6 +190,16 @@ const server = createServer((socket) => {
     });
     
     try {
+
+      // TODO Handle method
+      if (path === "/api") {
+        return;
+      }
+
+      // TODO Upload File
+      if (path === "/upload") {
+        return;
+      }
       // default index file
       // example:
       // http://localhost:port
@@ -211,10 +221,6 @@ const server = createServer((socket) => {
         socket.end();
         return;
       }
-
-      // TODO Handle method
-      // TODO Upload File
-
     } catch (error) {
       const response = Response(
         HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
