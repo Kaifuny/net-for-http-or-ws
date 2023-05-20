@@ -1,0 +1,20 @@
+{
+  "name": "internal",
+  "version": "1.0.0",
+  "description": "node.js websocket http",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "node.js",
+    "websocket",
+    "http"
+  ],
+  "author": "Kaifuny",
+  "license": "MIT",
+  "devDependencies": {
+    "rollup": "^3.22.0",
+    "typescript": "^5.0.4"
+  }
+}
