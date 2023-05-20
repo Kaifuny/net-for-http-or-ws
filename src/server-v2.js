@@ -132,6 +132,15 @@ const ResponseCookie = (statusCode, headers, body, cookie) => {
   return `${HTTP_VERSION} ${statusCode} ${HTTP_STATUS_TEXT[statusCode]}\r\n${header}Set-Cookie: ${cookie}\r\n\r\n${body}`;
 };
 
+const sendResponse = (socket, statusCode, headers, body) => {
+  const response = Response(statusCode, {
+    "Content-Length": body.length,
+    ...headers
+  }, body);
+  socket.write(response);
+  socket.end();
+};
+
 const sendClientOrServerErrorCode = (socket, code, errorMessage) => {
   const response = Response(
     code,
@@ -203,8 +212,23 @@ const server = createServer((socket) => {
           contentType = CONTENTTYPE_MAP[key];
         }
       });
-
-      // TODO Handle method
+      // Handle assets
+      if (path.startsWith("/asserts")) {
+        const filePath = join(Config.asserts, path.replace("/asserts", ""));
+        fs.stat(filePath, (err, stats) => {
+          if (err) {
+            sendClientOrServerErrorCode(socket, HTTP_STATUS_CODE.NOT_FOUND);
+            return;
+          }
+          if (stats.isFile()) {
+            const body = fs.readFileSync(filePath);
+            sendResponse(socket, HTTP_STATUS_CODE.OK, { "Content-Type": contentType }, body);
+            return;
+          }
+        });
+        return;
+      }
+      // Handle method
       if (path === "/api") {
         Config.api.forEach((item) => {
           if (item.path === path && item.method === method) {
@@ -214,7 +238,7 @@ const server = createServer((socket) => {
         return;
       }
 
-      // TODO Upload File
+      // Upload File
       if (path === "/upload") {
         Config.upload.forEach((item) => {
           if (item.path === path && item.method === method) {
@@ -231,17 +255,8 @@ const server = createServer((socket) => {
       // http://localhost:port/.../index.html
       const endsWithConfigIndex = Config.index.map((item) => path.endsWith(item)).includes(true);
       if (method === HTTP_METHOD.GET && endsWithConfigIndex) {
-        const data = fs.readFileSync(join(Config.root, path.endsWith("/") ? path + "index.html" : "/index.html"));
-        const response = Response(
-          HTTP_STATUS_CODE.OK,
-          {
-            "Content-Type": contentType,
-            "Content-Length": data.length,
-          },
-          data
-        );
-        socket.write(response);
-        socket.end();
+        const body = fs.readFileSync(join(Config.root, path.endsWith("/") ? path + "index.html" : "/index.html"));
+        sendResponse(socket, HTTP_STATUS_CODE.OK, { "Content-Type": contentType }, body);
         return;
       }
     } catch (error) {
@@ -249,15 +264,15 @@ const server = createServer((socket) => {
         sendClientOrServerErrorCode(socket, HTTP_STATUS_CODE.NOT_FOUND);
         return;
       }
-      sendClientOrServerErrorCode(socket, HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR, error.message);
+      sendClientOrServerErrorCode(socket, HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR, error.toString());
     }
 
     // 404
-    sendClientOrServerHErrorCode(socket, HTTP_STATUS_CODE.NOT_FOUND);
+    sendClientOrServerErrorCode(socket, HTTP_STATUS_CODE.NOT_FOUND);
   });
 
   socket.on("error", (data) => {
-    sendClientOrServerErrorCode(socket, HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR, error.message);
+    sendClientOrServerErrorCode(socket, HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR, data.message);
   });
 });
 
