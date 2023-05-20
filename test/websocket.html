@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Websocket</title>
+</head>
+<body>
+    <script>
+        const ws = new WebSocket('ws://localhost:8888/websocket');
+        ws.onopen = () => {
+            console.log('open');
+            ws.send('hello');
+        };
+        ws.onmessage = (event) => {
+            console.log("receive: ", event.data);
+        };
+        ws.onclose = () => {
+            console.log('close');
+        };
+    </script>
+</body>
