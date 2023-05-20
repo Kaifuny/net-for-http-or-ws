@@ -159,7 +159,7 @@ const Config = {
   host: "localhost",
   root: join(__dirname, "../test/www"),
   index: ["/", "/index", "/index.html"],
-  asserts: join(__dirname, "../test/asserts"),
+  asserts: join(__dirname, "../test/www/assets"),
   auth: {
     username: "admin",
     password: "admin",
@@ -213,19 +213,11 @@ const server = createServer((socket) => {
         }
       });
       // Handle assets
-      if (path.startsWith("/asserts")) {
-        const filePath = join(Config.asserts, path.replace("/asserts", ""));
-        fs.stat(filePath, (err, stats) => {
-          if (err) {
-            sendClientOrServerErrorCode(socket, HTTP_STATUS_CODE.NOT_FOUND);
-            return;
-          }
-          if (stats.isFile()) {
-            const body = fs.readFileSync(filePath);
-            sendResponse(socket, HTTP_STATUS_CODE.OK, { "Content-Type": contentType }, body);
-            return;
-          }
-        });
+      if (path.startsWith("/assets")) {
+        const filePath = join(Config.asserts, path.replace("/assets", ""));
+        console.log(filePath);
+        const body = fs.readFileSync(filePath);
+        sendResponse(socket, HTTP_STATUS_CODE.OK, { "Content-Type": contentType }, body);
         return;
       }
       // Handle method
