@@ -215,7 +215,6 @@ const server = createServer((socket) => {
       // Handle assets
       if (path.startsWith("/assets")) {
         const filePath = join(Config.asserts, path.replace("/assets", ""));
-        console.log(filePath);
         const body = fs.readFileSync(filePath);
         sendResponse(socket, HTTP_STATUS_CODE.OK, { "Content-Type": contentType }, body);
         return;
