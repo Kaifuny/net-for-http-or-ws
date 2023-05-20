@@ -132,6 +132,19 @@ const ResponseCookie = (statusCode, headers, body, cookie) => {
   return `${HTTP_VERSION} ${statusCode} ${HTTP_STATUS_TEXT[statusCode]}\r\n${header}Set-Cookie: ${cookie}\r\n\r\n${body}`;
 };
 
+const sendClientOrServerErrorCode = (socket, code) => {
+  const response = Response(
+    code,
+    {
+      "Content-Type": "text/plain",
+      "Content-Length": HTTP_STATUS_TEXT[code].length,
+    },
+    HTTP_STATUS_TEXT[code]
+  );
+  socket.write(response);
+  socket.end();
+};
+
 const Config = {
   port: 8888,
   host: "localhost",
@@ -150,46 +163,28 @@ const server = createServer((socket) => {
     console.log(`Headers: ${JSON.stringify(headers)}`);
     console.log(`Body: ${body}`);
     console.log("====================================");
-
-    // is valid http version
-    if (httpVersion !== HTTP_VERSION) {
-      const response = Response(
-        HTTP_STATUS_CODE.BAD_REQUEST,
-        {
-          "Content-Type": "text/plain",
-          "Content-Length": "Bad Request".length,
-        },
-        "Bad Request"
-      );
-      socket.write(response);
-      socket.end();
-      return;
-    }
-
-    // is valid http method
-    if (!Object.values(HTTP_METHOD).includes(method)) {
-      const response = Response(
-        HTTP_STATUS_CODE.METHOD_NOT_ALLOWED,
-        {
-          "Content-Type": "text/plain",
-          "Content-Length": "Method Not Allowed".length,
-        },
-        "Method Not Allowed"
-      );
-      socket.write(response);
-      socket.end();
-      return;
-    }
-
-    // content type
-    let contentType = headers["Content-Type"] || "text/html";
-    Object.keys(CONTENTTYPE_MAP).forEach((key) => {
-      if (path.endsWith(key)) {
-        contentType = CONTENTTYPE_MAP[key];
-      }
-    });
-    
     try {
+      // is valid http version
+      if (httpVersion !== HTTP_VERSION) {
+        sendClientOrServerErrorCode(socket, HTTP_STATUS_CODE.BAD_REQUEST);
+        return;
+      }
+
+      // is valid http method
+      if (!Object.values(HTTP_METHOD).includes(method)) {
+        sendClientOrServerErrorCode(socket, HTTP_STATUS_CODE.METHOD_NOT_ALLOWED);
+        return;
+      }
+
+      // content type
+      let contentType = headers["Content-Type"] || "text/html";
+      Object.keys(CONTENTTYPE_MAP).forEach((key) => {
+        if (path.endsWith(key)) {
+          contentType = CONTENTTYPE_MAP[key];
+        }
+      });
+    
+    
 
       // TODO Handle method
       if (path === "/api") {
@@ -208,7 +203,7 @@ const server = createServer((socket) => {
       // http://localhost:port/.../index.html
       const endsWithConfigIndex = Config.index.map((item) => path.endsWith(item)).includes(true);
       if (method === HTTP_METHOD.GET && endsWithConfigIndex) {
-        const data = fs.readFileSync(join(Config.root, "/index.html"));
+        const data = fs.readFileSync(join(Config.root, path.endsWith("/") ? path + "index.html" : "/index.html"));
         const response = Response(
           HTTP_STATUS_CODE.OK,
           {
@@ -222,43 +217,19 @@ const server = createServer((socket) => {
         return;
       }
     } catch (error) {
-      const response = Response(
-        HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
-        {
-          "Content-Type": "text/plain",
-          "Content-Length": "Internal Server Error".length,
-        },
-        "Internal Server Error"
-      );
-      socket.write(response);
-      socket.end();
+      if (error.code === "ENOENT") {
+        sendClientOrServerErrorCode(socket, HTTP_STATUS_CODE.NOT_FOUND);
+        return;
+      }
+      sendClientOrServerErrorCode(socket, HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR);
     }
 
     // 404
-    const response = Response(
-      HTTP_STATUS_CODE.NOT_FOUND,
-      {
-        "Content-Type": "text/plain",
-        "Content-Length": "Not Found".length,
-      },
-      "Not Found"
-    );
-    socket.write(response);
-    socket.end();
+    sendClientOrServerHErrorCode(socket, HTTP_STATUS_CODE.NOT_FOUND);
   });
 
   socket.on("error", (data) => {
-    console.error("socket error", data);
-    const response = Response(
-      HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
-      {
-        "Content-Type": "text/plain",
-        "Content-Length": "Internal Server Error".length,
-      },
-      "Internal Server Error"
-    );
-    socket.write(response);
-    socket.end();
+    sendClientOrServerErrorCode(socket, HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR);
   });
 });
 
