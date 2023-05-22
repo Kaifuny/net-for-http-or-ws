@@ -74,32 +74,22 @@ const server = createServer((socket) => {
     const MASK = request[1] >> 7;
     const payloadLength = request[1] & 0b01111111;
     const maskingKey = request.slice(2, 6);
-    const payload = request.slice(6);
-    const decoded = payload
-      .split("")
-      .map((char, index) =>
-        String.fromCharCode(
-          char.charCodeAt(0) ^ maskingKey[index % 4].charCodeAt(0)
-        )
-      )
-      .join("");
 
     console.log("====================================");
     console.log("FIN: ", FIN);
     console.log("opcode: ", opcode);
-    console.log("MASK: ", MASK);
+    console.log("MASK: ", MASK.toString(2));
     console.log("payloadLength: ", payloadLength);
-    console.log("maskingKey: ", maskingKey);
-    console.log("payload: ", payload);
-    console.log("decoded: ", decoded.toString());
+    console.log("maskingKey: ", maskingKey.toString());
     console.log("====================================");
-
+    
     // frame
     const response = Buffer.from([
       0b10000001, 0b00000101, 0b01000001, 0b01000010, 0b01000011, 0b01000100,
       0b01000101,
     ]);
     socket.write(response);
+    socket.end();
   });
 });
 
