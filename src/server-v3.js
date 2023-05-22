@@ -73,8 +73,8 @@ const server = createServer((socket) => {
     const opcode = data[1] & 0b00001111;
     const MASK = data[1] & 0b100000000;
     const payloadLength = data[1] & 0b01111111;
-    const maskingKey = data.slice(2, 6);
-    const payloadData = data.slice(6);
+    const maskingKey = data.subarray(2, 6);
+    const payloadData = data.subarray(6);
     const decode = payloadData.map((v, i) => v ^ maskingKey[i % 4]);
     console.log("====================================");
     console.log("FIN: ", FIN);
@@ -86,7 +86,7 @@ const server = createServer((socket) => {
     console.log("decode: ", decode.toString()); // client send string
     console.log("====================================");
 
-    // frame response
+    // send response from recived data
     const response = Buffer.from([
       0b10000001, payloadLength, ...decode.toString().split("").map(v => v.charCodeAt(0))
     ]);
